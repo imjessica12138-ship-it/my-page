@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>夸克AI链接生成器</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            padding-bottom: 120px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-top: 20px;
+        }
+        .header h1 {
+            color: white;
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            margin-bottom: 10px;
+        }
+        .header p {
+            color: rgba(255,255,255,0.8);
+            font-size: 1rem;
+        }
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 24px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-2px);
+        }
+        .form-group {
+            margin-bottom: 24px;
+        }
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: #1a1a2e;
+            font-weight: 600;
+            font-size: 15px;
+        }
+        label .desc {
+            font-weight: 400;
+            color: #666;
+            font-size: 13px;
+        }
+        .required::after {
+            content: " *";
+            color: #e74c3c;
+        }
+        input[type="text"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid #e8e8e8;
+            border-radius: 12px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            background: #fafafa;
+        }
+        input[type="text"]:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23667eea' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            padding-right: 40px;
+        }
+        .checkbox-group {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border: 2px solid #e8e8e8;
+            transition: all 0.3s ease;
+        }
+        .checkbox-group:hover {
+            border-color: #667eea;
+            background: #f0f2ff;
+        }
+        .checkbox-group input[type="checkbox"] {
+            width: 22px;
+            height: 22px;
+            cursor: pointer;
+            accent-color: #667eea;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+        .checkbox-group label {
+            margin: 0;
+            font-weight: 400;
+            cursor: pointer;
+            flex: 1;
+        }
+        .checkbox-hint {
+            display: block;
+            font-size: 12px;
+            color: #888;
+            margin-top: 6px;
+            font-style: italic;
+        }
+        .section-title {
+            font-size: 20px;
+            color: #1a1a2e;
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            border-bottom: 3px solid linear-gradient(90deg, #667eea, #764ba2);
+            position: relative;
+        }
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 0;
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 2px;
+        }
+        .result-section {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .result-section.show {
+            display: block;
+        }
+        .result-box {
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            border: 2px solid #e8e8e8;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            word-break: break-all;
+            transition: all 0.3s ease;
+        }
+        .result-box:hover {
+            border-color: #667eea;
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.1);
+        }
+        .result-label {
+            font-size: 13px;
+            color: #667eea;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .result-content {
+            font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+            font-size: 13px;
+            color: #333;
+            line-height: 1.8;
+            background: #1a1a2e;
+            color: #00ff88;
+            padding: 16px;
+            border-radius: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .copy-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .copy-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        .qr-section {
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            border-radius: 16px;
+            border: 2px solid #e8e8e8;
+            margin-top: 20px;
+        }
+        #qrcode {
+            display: inline-block;
+            padding: 24px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+        .qr-hint {
+            margin-top: 20px;
+            color: #666;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .fixed-bottom {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            box-shadow: 0 -8px 32px rgba(0,0,0,0.15);
+            z-index: 100;
+        }
+        .fixed-bottom .container {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            gap: 16px;
+        }
+        .generate-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 18px 32px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 2;
+            box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+        }
+        .generate-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+        }
+        .generate-btn:active {
+            transform: translateY(0);
+        }
+        .reset-btn {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+            padding: 18px 32px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 1;
+        }
+        .reset-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+        }
+        .toast {
+            position: fixed;
+            bottom: 140px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #1a1a2e;
+            color: white;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+        .entry-option {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .entry-code {
+            color: #999;
+            font-size: 12px;
+            font-weight: 400;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+        .badge-default {
+            background: #e8e8e8;
+            color: #666;
+        }
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            .fixed-bottom .container {
+                flex-direction: column;
+            }
+            .generate-btn, .reset-btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>夸克AI链接生成器</h1>
+            <p>快速生成夸克AI对话链接，支持二维码扫描验证</p>
+        </div>
+        
+        <div class="card">
+            <h2 class="section-title">基础配置</h2>
+            
+            <div class="form-group">
+                <label for="entryType" class="required">entry <span class="desc">- 来源入口</span></label>
+                <select id="entryType" onchange="onEntryTypeChange()">
+                    <option value="">-- 请选择入口 --</option>
+                    <option value="flzx">福利中心-任务 (flzx)</option>
+                    <option value="flzx_chat">福利中心-搜索 (flzx_chat)</option>
+                    <option value="bbnc">芭芭农场 (bbnc)</option>
+                    <option value="gengduo">更多 (gengduo)</option>
+                    <option value="flzx_rw">福利中心-今日热问 (flzx_rw)</option>
+                    <option value="novel">小说 (novel)</option>
+                    <option value="doodle">Doodle (doodle)</option>
+                    <option value="grzx">个人中心banner (grzx)</option>
+                    <option value="custom">自定义...</option>
+                </select>
+            </div>
+            
+            <div class="form-group" id="customEntryGroup" style="display: none;">
+                <label for="customEntry" class="required">自定义 entry <span class="desc">- 输入自定义入口标识</span></label>
+                <input type="text" id="customEntry" placeholder="例如: my_custom_entry">
+            </div>
+            
+            <div class="form-group">
+                <label for="query" class="required">query <span class="desc">- 发送内容/搜索内容</span></label>
+                <textarea id="query" placeholder="请输入要发送的内容..."></textarea>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2 class="section-title">高级配置</h2>
+            
+            <div class="form-group">
+                <label for="searchMode">search_mode <span class="desc">- 搜索模式</span></label>
+                <select id="searchMode">
+                    <option value="none">none - 默认值，不开启任何模式</option>
+                    <option value="ds">ds - 深度思考</option>
+                    <option value="drs">drs - 深度研究</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>transfer_memory_info <span class="desc">- 对话记忆设置</span> <span class="badge">默认</span></label>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="transferMemory" checked>
+                    <label for="transferMemory">
+                        启用 transfer_memory_info
+                        <span class="checkbox-hint">存在此字段会重启对话，删除则在用户最后对话继续</span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>query_info <span class="desc">- iOS新版直接发送设置</span> <span class="badge">默认</span></label>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="directSend" checked>
+                    <label for="directSend">
+                        启用 direct_send: true
+                        <span class="checkbox-hint">iOS新版直接发送，兼容旧版和安卓所有版本</span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>pop_to_home <span class="desc">- 返回首页设置</span></label>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="popToHome">
+                    <label for="popToHome">
+                        选中 = false（返回上一级） | 不选中 = true（返回首页）
+                        <span class="checkbox-hint">选择预设entry时默认返回上一级</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card result-section" id="resultSection">
+            <h2 class="section-title">生成结果</h2>
+            
+            <div class="result-box">
+                <div class="result-label">
+                    <span>生成链接</span>
+                    <button class="copy-btn" onclick="copyToClipboard('finalUrl')">复制链接</button>
+                </div>
+                <div class="result-content" id="finalUrl"></div>
+                <div class="qr-section" style="margin-top: 20px;">
+                    <div id="qrcode"></div>
+                    <p class="qr-hint">扫描二维码验证跳转</p>
+                </div>
+            </div>
+            
+            <div class="result-box">
+                <div class="result-label">
+                    <span>Encode 编码</span>
+                    <button class="copy-btn" onclick="copyToClipboard('encodedParams')">复制编码</button>
+                </div>
+                <div class="result-content" id="encodedParams"></div>
+            </div>
+            
+            <div class="result-box">
+                <div class="result-label">
+                    <span>JSON 数据预览</span>
+                    <button class="copy-btn" onclick="copyToClipboard('jsonPreview')">复制JSON</button>
+                </div>
+                <div class="result-content" id="jsonPreview"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="fixed-bottom">
+        <div class="container">
+            <button class="generate-btn" onclick="generateLink()">生成链接</button>
+            <button class="reset-btn" onclick="resetForm()">重新生成</button>
+        </div>
+    </div>
+    
+    <div class="toast" id="toast">已复制到剪贴板</div>
+
+    <script>
+        // 预设返回上一级的entry列表 (pop_to_home = false)
+        const returnPrevEntries = ['flzx', 'flzx_chat', 'bbnc', 'gengduo', 'flzx_rw', 'novel', 'grzx'];
+        // 预设返回首页的entry列表 (pop_to_home = true)
+        const returnHomeEntries = ['doodle'];
+        
+        function onEntryTypeChange() {
+            const entryType = document.getElementById('entryType').value;
+            const customEntryGroup = document.getElementById('customEntryGroup');
+            const popToHomeCheckbox = document.getElementById('popToHome');
+            
+            // 显示/隐藏自定义输入框
+            if (entryType === 'custom') {
+                customEntryGroup.style.display = 'block';
+                popToHomeCheckbox.checked = false;
+            } else {
+                customEntryGroup.style.display = 'none';
+                
+                if (returnPrevEntries.includes(entryType)) {
+                    // 返回上一级：选中复选框 (pop_to_home = false)
+                    popToHomeCheckbox.checked = true;
+                } else if (returnHomeEntries.includes(entryType)) {
+                    // 返回首页：不选中复选框 (pop_to_home = true)
+                    popToHomeCheckbox.checked = false;
+                } else {
+                    popToHomeCheckbox.checked = false;
+                }
+            }
+        }
+        
+        function getEntryValue() {
+            const entryType = document.getElementById('entryType').value;
+            if (entryType === 'custom') {
+                return document.getElementById('customEntry').value.trim();
+            }
+            return entryType;
+        }
+        
+        function generateLink() {
+            const entry = getEntryValue();
+            const query = document.getElementById('query').value.trim();
+            const searchMode = document.getElementById('searchMode').value;
+            const transferMemory = document.getElementById('transferMemory').checked;
+            const directSend = document.getElementById('directSend').checked;
+            const popToHome = document.getElementById('popToHome').checked;
+            
+            if (!entry) {
+                showToast('请选择entry来源');
+                document.getElementById('entry').focus();
+                return;
+            }
+            
+            if (!query) {
+                showToast('请输入query内容');
+                document.getElementById('query').focus();
+                return;
+            }
+            
+            // 构建参数对象
+            const params = {
+                query: query,
+                search_mode: searchMode,
+                entry: entry
+            };
+            
+            if (transferMemory) {
+                params.transfer_memory_info = "{}";
+            }
+            
+            if (directSend) {
+                params.query_info = {
+                    direct_send: "true"
+                };
+            }
+            
+            // pop_to_home: 选中=false，不选中=true
+            params.pop_to_home = popToHome ? "false" : "true";
+            
+            // 构建JSON字符串（紧凑格式，移除空格）
+            const compactJsonStr = JSON.stringify(params);
+            // 用于预览的格式（依然保持美化，但提示用户编码使用的是紧凑版）
+            const prettyJsonStr = JSON.stringify(params, null, 2);
+            
+            // URL编码（使用紧凑格式进行编码）
+            const encodedParams = encodeURIComponent(compactJsonStr);
+            
+            // 构建完整链接
+            const baseUrl = "http://www.myquark.cn?qk_biz=ai_chat&qk_module=home&qk_params=";
+            const finalUrl = baseUrl + encodedParams + "&launch_mode=single_top";
+            
+            // 显示结果
+            document.getElementById('finalUrl').textContent = finalUrl;
+            document.getElementById('encodedParams').textContent = encodedParams;
+            document.getElementById('jsonPreview').textContent = compactJsonStr; // 显示紧凑版JSON，确保无空格
+            document.getElementById('resultSection').classList.add('show');
+            
+            // 生成二维码
+            generateQRCode(finalUrl);
+            
+            // 滚动到结果区域
+            setTimeout(() => {
+                document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        }
+        
+        function generateQRCode(url) {
+            const qrContainer = document.getElementById('qrcode');
+            qrContainer.innerHTML = '';
+            
+            new QRCode(qrContainer, {
+                text: url,
+                width: 180,
+                height: 180,
+                colorDark: '#1a1a2e',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.M
+            });
+        }
+        
+        function copyToClipboard(elementId) {
+            const text = document.getElementById(elementId).textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('已复制到剪贴板');
+            }).catch(() => {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showToast('已复制到剪贴板');
+            });
+        }
+        
+        function resetForm() {
+            document.getElementById('entryType').value = '';
+            document.getElementById('customEntry').value = '';
+            document.getElementById('customEntryGroup').style.display = 'none';
+            document.getElementById('query').value = '';
+            document.getElementById('searchMode').value = 'none';
+            document.getElementById('transferMemory').checked = true;
+            document.getElementById('directSend').checked = true;
+            document.getElementById('popToHome').checked = false;
+            document.getElementById('resultSection').classList.remove('show');
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            showToast('已重置为初始设置');
+        }
+        
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2500);
+        }
+    </script>
+</body>
+</html>
